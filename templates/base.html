@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Basic Page Needs
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta charset="utf-8">
+  <title>Bens Bienen{{ pagetitle }}</title>
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!-- Mobile Specific Metas
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- FONT
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+
+  <!-- CSS
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="stylesheet" href="/css/normalize.css">
+  <link rel="stylesheet" href="/css/skeleton.css">
+  <link rel="stylesheet" href="/css/main.css">
+
+  <!-- Favicon
+  –––––––––––––––––––––––––––––––––––––––––––––––––– 
+  <link rel="icon" type="image/png" href="/images/favicon.png"> -->
+
+</head>
+<body>
+
+  <!-- Primary Page Layout
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <div class="container">
+    <div class="row">
+      <div class="six columns" style="margin-bottom:50px; margin-top:30px;">
+        <a href="/"><img src="/images/logokombiniert.png" alt="Bens Bienen" style="width:100%; max-width:399px;" /></a>
+      </div>
+      <div class="six columns" style="margin-bottom:50px; margin-top:30px;">
+        <div style="text-align:right; width:100%; position:relative; top:-20px; font-size:0.8em;">
+        </div>
+      </div>
+    </div>
+    <div class="row">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <div class="row">
+      <div class="twelve columns" style="margin-bottom:50px; margin-top:30px;">
+		<hr />
+        <div style="text-align:center; width:100%; position:relative; top:-20px; font-size:0.8em;">
+            <a href="/">Home</a> &middot; <a href="/impressum/">Impressum</a> &middot; <a href="/datenschutz/">Datenschutz</a>
+        </div>
+      </div>
+    </div>
+
+</div>
+
+</body>
+</html>
