@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="row indexbox" >
+      <div class="twelve columns">
+          <h3>Hallo!</h3>
+          Hier schreibe ich ab und an mal ein paar Zeilen über meine Bienen. Ich halte Bienen nur zum Spaß. Ich verkaufe keinen Honig und kein Wachs.
+          <br>
+          <br>
+          <ul>
+		  {% for a in articles %}
+              <li><a href="/{{ a.path }}">{{ a.title }}</a></li>
+		  {% endfor %}	
+          </ul>
+      </div>
+    </div>
+    {{ content }}
+{% endblock %}
