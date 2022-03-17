@@ -75,7 +75,13 @@ def main(args):
 
         # Get the title
         title = config['title']
-        path = title_to_path(title)
+
+        # We generate the path from the title if it isn't provided by the 
+        # article itself.
+        if 'path' not in config:
+            path = title_to_path(title)
+        else:
+            path = config['path']
 
         # Copy the contents of the 'static' folder build folder
         if os.path.exists('temp/static'):
@@ -84,8 +90,13 @@ def main(args):
         # Convert the Markdown to HTML
         html = markdown_to_html(markdown)
  
-        # Render the article
-        template = env.get_template('article.html')
+        # Render the article with the template it wants - with limits.
+        valid_templates = ['article.html', 'article_raw.html']
+        if 'template' not in config or not os.path.exists('templates/{}'.format(config['template'])) or config['template'] not in valid_templates:
+            template = 'article.html'
+        else:
+            template = config['template']
+        template = env.get_template(template)
         article = template.render(
                                     content=html,
                                     config=config
@@ -99,10 +110,11 @@ def main(args):
             k.write(article)
 
 
-
         # Add the article to the list of articles for rendering of the index file.
-        articlelist.append({'title': title,
-                            'path': path})
+        # You can set 'index: false' in the articles config file to exclude the article from the index page.
+        if 'index' not in config or config['index'] == True:
+            articlelist.append({'title': title,
+                                'path': path})
 
     # Create the index
     template = env.get_template('index.html')

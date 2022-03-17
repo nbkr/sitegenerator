@@ -14,13 +14,15 @@
 
   <!-- FONT
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
 
   <!-- CSS
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <link rel="stylesheet" href="/css/normalize.css">
-  <link rel="stylesheet" href="/css/skeleton.css">
-  <link rel="stylesheet" href="/css/main.css">
+  {% block css %}
+  <link rel="stylesheet" href="css/normalize.css">
+  <link rel="stylesheet" href="css/skeleton.css">
+  <link rel="stylesheet" href="css/main.css">
+  {% endblock %}
 
   <!-- Favicon
   –––––––––––––––––––––––––––––––––––––––––––––––––– 
@@ -34,7 +36,9 @@
   <div class="container">
     <div class="row">
       <div class="six columns" style="margin-bottom:50px; margin-top:30px;">
-        <a href="/"><img src="/images/logokombiniert.png" alt="Bens Bienen" style="width:100%; max-width:399px;" /></a>
+        {% block logo %}
+        <a href="#"><img src="images/logokombiniert.png" alt="Bens Bienen" style="width:100%; max-width:399px;" /></a>
+        {% endblock %}
       </div>
       <div class="six columns" style="margin-bottom:50px; margin-top:30px;">
         <div style="text-align:right; width:100%; position:relative; top:-20px; font-size:0.8em;">
@@ -50,7 +54,9 @@
       <div class="twelve columns" style="margin-bottom:50px; margin-top:30px;">
 		<hr />
         <div style="text-align:center; width:100%; position:relative; top:-20px; font-size:0.8em;">
-            <a href="/">Home</a> &middot; <a href="/impressum/">Impressum</a> &middot; <a href="/datenschutz/">Datenschutz</a>
+            {% block imprint %}
+            <a href="impressum/index.html">Impressum</a> &middot; <a href="datenschutz/index.html">Datenschutz</a>
+            {% endblock %}
         </div>
       </div>
     </div>
