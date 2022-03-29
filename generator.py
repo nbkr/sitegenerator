@@ -28,13 +28,14 @@ def get_first_heading(markdown):
         if l.startswith('# '):
             return l.replace('# ', '').strip()
 
-def render_article():
-    pass
+def main_version(args):
+    print_version()
+    sys.exit(0)
 
-def main(args):
+def main_generate(args):
 
     # Setting the loglevel
-    numeric_level = getattr(logging, args.loglevel, None)
+    numeric_level = getattr(logging, args.loglevel.upper(), None)
     handlers = []
     handlers.append(logging.StreamHandler(sys.stdout))
     if args.logfile is not None:
@@ -70,7 +71,7 @@ def main(args):
     articlelist = []
 
     for article in data:
-        logging.debug('Processing article.')
+        logging.debug('Processing article with source "{}".'.format(article['source']))
         logging.debug('Clearing the temp folder')
         # Create/Empty Temp folder
         if os.path.exists('temp'):
@@ -173,15 +174,20 @@ def main(args):
 
     logging.info("Site generation complete.")
 
-parser = argparse.ArgumentParser(description="Ben's Homepage Generator")
-parser.add_argument('--version', '-v', help='show version and exit', action='store_true')
-parser.add_argument('--loglevel', help='Setting the loglevel.', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG'], default='INFO')
+parser = argparse.ArgumentParser(description="Ben's Homepage Generator.")
+parser.add_argument('--loglevel', help='Setting the loglevel.', choices=['critical', 'error', 'warning', 'info', 'debug'], default='INFO')
 parser.add_argument('--logfile', help='Output logs to given logfile.')
 
+
+subparsers = parser.add_subparsers()
+sub_gen = subparsers.add_parser('generate', aliases=['gen'], description='Generate the site.', help='Generate the site.')
+sub_gen.set_defaults(func=main_generate)
+
+sub_version = subparsers.add_parser('version', aliases=['v'], description='Show version and exit.', help='Show version and exit.')
+sub_version.set_defaults(func=main_version)
+
 args = parser.parse_args()
-
-if args.version:
-    print_version()
-    sys.exit(0)
-
-main(args)
+if 'func' in args:
+    args.func(args)
+else:
+    parser.parse_args(['--help'])
