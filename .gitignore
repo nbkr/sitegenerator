@@ -4,3 +4,4 @@ build
 *.log
 config.yml
 articles.yml
+templates
