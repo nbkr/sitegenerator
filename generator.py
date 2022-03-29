@@ -162,7 +162,8 @@ def main_generate(args):
         template = env.get_template(template)
         article = template.render(
                                     content=html,
-                                    config=config
+                                    config=config,
+                                    title=title
                                     )
 
         # Safe the page to the build folder.
