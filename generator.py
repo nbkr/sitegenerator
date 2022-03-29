@@ -28,12 +28,7 @@ def get_first_heading(markdown):
         if l.startswith('# '):
             return l.replace('# ', '').strip()
 
-def main_version(args):
-    print_version()
-    sys.exit(0)
-
-def main_generate(args):
-
+def set_logging(loglevel, logfile):
     # Setting the loglevel
     numeric_level = getattr(logging, args.loglevel.upper(), None)
     handlers = []
@@ -46,6 +41,30 @@ def main_generate(args):
             level=numeric_level,
             handlers=handlers
         )
+
+def main_version(args):
+    print_version()
+    sys.exit(0)
+
+def main_sync(args):
+    set_logging(args.loglevel, args.logfile)
+
+    logging.debug('Opening config.yml')
+    with open('config.yml', 'r') as f:
+        config = yaml.safe_load(f)
+
+    logging.info('Starting rsync.')
+    try:
+        subprocess.check_call('rsync -az ./build/ {}'.format(config[args.environment]['dest']), shell=True)
+    except:
+        logging.critical('Rsync failed.')
+        sys.exit(1)
+
+    logging.info('rsync done.')
+
+def main_generate(args):
+
+    set_logging(args.loglevel, args.logfile)
 
     logging.info('Starting site generation.')
 
@@ -185,6 +204,10 @@ sub_gen.set_defaults(func=main_generate)
 
 sub_version = subparsers.add_parser('version', aliases=['v'], description='Show version and exit.', help='Show version and exit.')
 sub_version.set_defaults(func=main_version)
+
+sub_sync = subparsers.add_parser('sync', description='Show sync and exit.', help='Show sync and exit.')
+sub_sync.add_argument('environment', help='The environment within config.yml to sync to.')
+sub_sync.set_defaults(func=main_sync)
 
 args = parser.parse_args()
 if 'func' in args:

@@ -1,0 +1,2 @@
+prod:
+    dest: www.example.com:/var/www/bensbienen.de/droot

@@ -2,3 +2,5 @@ venv
 temp
 build
 *.log
+config.yml
+articles.yml
