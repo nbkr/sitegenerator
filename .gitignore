@@ -5,3 +5,4 @@ build
 config.yml
 articles.yml
 templates
+static
