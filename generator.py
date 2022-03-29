@@ -208,7 +208,7 @@ sub_gen.set_defaults(func=main_generate)
 sub_version = subparsers.add_parser('version', aliases=['v'], description='Show version and exit.', help='Show version and exit.')
 sub_version.set_defaults(func=main_version)
 
-sub_sync = subparsers.add_parser('sync', description='Show sync and exit.', help='Show sync and exit.')
+sub_sync = subparsers.add_parser('sync', description='Sync build folder to environment.', help='Sync build folder to environment.')
 sub_sync.add_argument('environment', help='The environment within config.yml to sync to.')
 sub_sync.set_defaults(func=main_sync)
 
