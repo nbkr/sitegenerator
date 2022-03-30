@@ -30,6 +30,20 @@ def get_first_heading(markdown):
         if l.startswith('# '):
             return l.replace('# ', '').strip()
 
+def get_config(args, key):
+    with open(args.configfile, 'r') as f:
+        config = yaml.safe_load(f)
+
+    c = config
+    for k in key.split('.'):
+        if k in c:
+            c = c[k]
+        else:
+            logging.critical('Config key "{}" not set properly.'.format(key))
+            sys.exit(1)
+
+    return c
+
 def set_logging(loglevel, logfile):
     # Setting the loglevel
     numeric_level = getattr(logging, args.loglevel.upper(), None)
@@ -51,13 +65,9 @@ def main_version(args):
 def main_sync(args):
     set_logging(args.loglevel, args.logfile)
 
-    logging.debug('Opening config.yml')
-    with open('config.yml', 'r') as f:
-        config = yaml.safe_load(f)
-
     logging.info('Starting rsync.')
     try:
-        subprocess.check_call('rsync -az ./build/ {}'.format(config[args.environment]['dest']), shell=True)
+        subprocess.check_call('rsync -az ./build/ {}'.format(get_config(args, 'sync.{}.dest'.format(args.environment))), shell=True)
     except:
         logging.critical('Rsync failed.')
         sys.exit(1)
@@ -71,23 +81,26 @@ def main_generate(args):
     logging.info('Starting site generation.')
 
     # Read the articles yml file
-    with open('articles.yml', 'r') as f:
-        data = yaml.safe_load(f)
+    data = get_config(args, 'articles')
+
+    if data is None:
+        logging.critical('No articles defined.')
+        sys.exit(1)
 
     if os.path.exists('build'):
         logging.debug('Removing the build folder.')
         shutil.rmtree('build')
 
-    if os.path.exists('static'):
+    if os.path.exists(get_config(args, 'staticdir')):
         logging.debug('Copying the general static folder to the build folder.')
-        shutil.copytree('static/', 'build/')
+        shutil.copytree('{}/'.format(get_config(args, 'staticdir')), 'build/')
 
     if not os.path.exists('build'):
         logging.debug('Creating the build folder.')
         os.makedirs('build')
 
     # Template environment
-    env = jinja2.Environment(loader=jinja2.FileSystemLoader('templates', encoding='utf8'))
+    env = jinja2.Environment(loader=jinja2.FileSystemLoader(get_config(args, 'templatesdir'), encoding='utf8'))
 
     articlelist = []
 
@@ -125,9 +138,12 @@ def main_generate(args):
             config = yaml.safe_load(f)
 
         # Get the title
-        if 'title' in config:
+        if 'title' in article:
+            title = article['title']
+            logging.debug('Getting title "{}" from global config.'.format(title))
+        elif 'title' in config:
             title = config['title']
-            logging.debug('Getting title "{}" from config.'.format(title))
+            logging.debug('Getting title "{}" from article config.'.format(title))
         else:
             title = get_first_heading(markdown)
             logging.debug('Getting title "{}" from first header.'.format(title))
@@ -199,6 +215,7 @@ def main_generate(args):
 parser = argparse.ArgumentParser(description="Ben's Homepage Generator.")
 parser.add_argument('--loglevel', help='Setting the loglevel.', choices=['critical', 'error', 'warning', 'info', 'debug'], default='INFO')
 parser.add_argument('--logfile', help='Output logs to given logfile.')
+parser.add_argument('--configfile', '-c', help='Where to find the configfile.', default='config.yml')
 
 
 subparsers = parser.add_subparsers()
