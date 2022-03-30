@@ -67,7 +67,7 @@ def main_sync(args):
 
     logging.info('Starting rsync.')
     try:
-        subprocess.check_call('rsync -az ./build/ {}'.format(get_config(args, 'sync.{}.dest'.format(args.environment))), shell=True)
+        subprocess.check_call('rsync -az {}/ {}'.format(get_config(args, 'builddir'), get_config(args, 'sync.{}.dest'.format(args.environment))), shell=True)
     except:
         logging.critical('Rsync failed.')
         sys.exit(1)
@@ -87,17 +87,17 @@ def main_generate(args):
         logging.critical('No articles defined.')
         sys.exit(1)
 
-    if os.path.exists('build'):
+    if os.path.exists(get_config(args, 'builddir')):
         logging.debug('Removing the build folder.')
-        shutil.rmtree('build')
+        shutil.rmtree(get_config(args, 'builddir'))
 
     if os.path.exists(get_config(args, 'staticdir')):
         logging.debug('Copying the general static folder to the build folder.')
-        shutil.copytree('{}/'.format(get_config(args, 'staticdir')), 'build/')
+        shutil.copytree('{}/'.format(get_config(args, 'staticdir')), '{}/'.format(get_config(args, 'builddir')))
 
-    if not os.path.exists('build'):
+    if not os.path.exists(get_config(args, 'builddir')):
         logging.debug('Creating the build folder.')
-        os.makedirs('build')
+        os.makedirs(get_config(args, 'builddir'))
 
     # Template environment
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(get_config(args, 'templatesdir'), encoding='utf8'))
@@ -160,7 +160,7 @@ def main_generate(args):
         # Copy the contents of the 'static' folder build folder
         if os.path.exists('temp/static'):
             logging.debug('Copying static folder from article.')
-            shutil.copytree('temp/static/', 'build/{}/'.format(path))
+            shutil.copytree('temp/static/', '{}/{}/'.format(get_config(args, 'builddir'), path))
 
         # Convert the Markdown to HTML
         logging.debug('Converting Markdown to HTML.')
@@ -185,11 +185,11 @@ def main_generate(args):
                                     )
 
         # Safe the page to the build folder.
-        if not os.path.exists('build/{}'.format(path)):
+        if not os.path.exists('{}/{}'.format(get_config(args, 'builddir'), path)):
             logging.debug("Creating the articles folder inside the build folder.")
-            os.makedirs('build/{}'.format(path))
+            os.makedirs('{}/{}'.format(get_config(args, 'builddir'), path))
 
-        with open('build/{}/index.html'.format(path), 'w') as k:
+        with open('{}/{}/index.html'.format(get_config(args, 'builddir'), path), 'w') as k:
             logging.debug("Writing the articles index.html")
             k.write(article)
 
@@ -207,7 +207,7 @@ def main_generate(args):
     index = template.render(
                             articles=articlelist
                             )
-    with open('build/index.html', 'w') as k:
+    with open('{}/index.html'.format(get_config(args, 'builddir')), 'w') as k:
         k.write(index)
 
     logging.info("Site generation complete.")
