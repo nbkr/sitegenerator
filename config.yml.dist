@@ -1,2 +1,18 @@
-prod:
-    dest: www.example.com:/var/www/bensbienen.de/droot
+staticdir: /home/bf/Projekte/example.com/static
+builddir: /home/bf/Projekte/example.com/build
+templatesdir: /home/bf/Projekte/example.com/templates
+
+sync:
+    prod:
+        dest: www.example.com:/var/www/bensbienen.de/droot
+
+var:
+    mailaddress: mail@example.com
+    template: 'article.html'
+
+
+articles:
+    - source: /home/bf/Projekte/articles/impressum
+    - source: /home/bf/Projekte/articles/datenschutz
+      var:
+          mailaddress: a_different_one@example.com

@@ -10,8 +10,10 @@ import shutil
 import subprocess
 import logging
 
+CONFIGCACHE=None
+
 def get_version():
-    return '1.0.0'
+    return '1.1.0'
 
 def print_version():
     print(get_version())
@@ -30,9 +32,49 @@ def get_first_heading(markdown):
         if l.startswith('# '):
             return l.replace('# ', '').strip()
 
+def check_if_in_config(args, key):
+    global CONFIGCACHE
+    if CONFIGCACHE is None:
+        if not os.path.exists(args.configfile):
+            logging.critical('Configfile at "{}" does not exist.'.format(args.configfile))
+            sys.exit(1)
+        try:
+            with open(args.configfile, 'r') as f:
+                config = yaml.safe_load(f)
+                CONFIGCACHE = config
+        except:
+            logging.critical('Could not open configfile at "{}".'.format(args.configfile))
+            sys.exit(1)
+    else:
+        config = CONFIGCACHE
+
+
+    c = config
+    found = True
+    for k in key.split('.'):
+        if k in c:
+            c = c[k]
+        else:
+            found = False
+
+    return found
+
 def get_config(args, key):
-    with open(args.configfile, 'r') as f:
-        config = yaml.safe_load(f)
+    global CONFIGCACHE
+    if CONFIGCACHE is None:
+        if not os.path.exists(args.configfile):
+            logging.critical('Configfile at "{}" does not exist.'.format(args.configfile))
+            sys.exit(1)
+        try:
+            with open(args.configfile, 'r') as f:
+                config = yaml.safe_load(f)
+                CONFIGCACHE = config
+        except:
+            logging.critical('Could not open configfile at "{}".'.format(args.configfile))
+            sys.exit(1)
+    else:
+        config = CONFIGCACHE
+
 
     c = config
     for k in key.split('.'):
@@ -73,6 +115,26 @@ def main_sync(args):
         sys.exit(1)
 
     logging.info('rsync done.')
+
+def get_vars(articleconfig, globalarticleconfig, globalvar):
+    ret = {}
+
+
+    if articleconfig is not None:
+        for k in articleconfig:
+            ret[k] = articleconfig[k]
+
+    if 'var' in globalarticleconfig:
+        if globalarticleconfig['var'] is not None:
+            for k in globalarticleconfig['var']:
+                ret[k] = globalarticleconfig['var'][k]
+
+    if globalvar is not None:
+        for k in globalvar:
+            ret[k] = globalvar[k]
+
+    return ret
+
 
 def main_generate(args):
 
@@ -130,85 +192,100 @@ def main_generate(args):
             markdown = f.read()
 
         # Read the config file
-        if not os.path.exists('temp/config.yml'):
-            logging.critical('temp/config.yml does not exist for source "{}"'.format(article['source']))
+        if not os.path.exists('temp/var.yml'):
+            logging.critical('temp/var.yml does not exist for source "{}"'.format(article['source']))
             sys.exit(1)
 
-        with open('temp/config.yml', 'r') as f:
-            config = yaml.safe_load(f)
+        with open('temp/var.yml', 'r') as f:
+            articleconfig = yaml.safe_load(f)
+
+        globalvar = None
+        if check_if_in_config(args, 'var'):
+            globalvar = get_config(args, 'var')
+
+        var = get_vars(articleconfig, article, globalvar)
 
         # Get the title
-        if 'title' in article:
-            title = article['title']
-            logging.debug('Getting title "{}" from global config.'.format(title))
-        elif 'title' in config:
-            title = config['title']
-            logging.debug('Getting title "{}" from article config.'.format(title))
-        else:
-            title = get_first_heading(markdown)
-            logging.debug('Getting title "{}" from first header.'.format(title))
+        if 'title' not in var:
+            var['title'] = get_first_heading(markdown)
+            logging.debug('Getting var.title "{}" from first header.'.format(title))
 
         # We generate the path from the title if it isn't provided by the 
         # article itself.
-        if 'path' not in config:
-            path = title_to_path(title)
-            logging.debug('Generating path "{}" from title.'.format(path))
-        else:
-            path = config['path']
-            logging.debug('Taking path "{}" from config.'.format(path))
+        if 'path' not in var:
+            var['path'] = title_to_path(var['title'])
+            logging.debug('Generating path "{}" from title.'.format(var['path']))
 
         # Copy the contents of the 'static' folder build folder
         if os.path.exists('temp/static'):
             logging.debug('Copying static folder from article.')
-            shutil.copytree('temp/static/', '{}/{}/'.format(get_config(args, 'builddir'), path))
+            shutil.copytree('temp/static/', '{}/{}/'.format(get_config(args, 'builddir'), var['path']))
 
-        # Convert the Markdown to HTML
+
+        # Convert the Markdown to Jinja2 to HTML
         logging.debug('Converting Markdown to HTML.')
+        contentenv = jinja2.Environment(loader=jinja2.BaseLoader).from_string(markdown)
+        try:
+            markdown = contentenv.render(var=var)
+        except:
+            logging.critical('Rendering of text.md of source "{}" to markdown failed.'.format(article['source']))
+            sys.exit(1)
         html = markdown_to_html(markdown)
+        
  
         # Render the article with the template it wants - with limits.
         logging.debug('Rendering article.')
         default_template = 'article.html'
         valid_templates = ['article.html', 'article_raw.html']
-        if 'template' not in config:
+        if 'template' not in var:
             template = default_template
-        elif not os.path.exists('templates/{}'.format(config['template'])) or config['template'] not in valid_templates:
-            logging.warning('Invalid template file "{}" for article "{}". Fallback to default template "article.html".'.format(config['template'], title))
+        elif not os.path.exists('{}/{}'.format(get_config(args, 'templatesdir'), var['template'])) or var['template'] not in valid_templates:
+            logging.warning('Invalid template file "{}" for article "{}". Fallback to default template "article.html".'.format(var['template'], var['title']))
             template = default_template
         else:
-            template = config['template']
+            template = var['template']
         template = env.get_template(template)
-        article = template.render(
-                                    content=html,
-                                    config=config,
-                                    title=title
-                                    )
+
+
+        try:
+            article = template.render(
+                                        content=html,
+                                        var=var
+                                        )
+        except:
+            logging.critical('Rendering of source "{}" to article failed.'.format(article['source']))
+            sys.exit(1)
 
         # Safe the page to the build folder.
-        if not os.path.exists('{}/{}'.format(get_config(args, 'builddir'), path)):
+        if not os.path.exists('{}/{}'.format(get_config(args, 'builddir'), var['path'])):
             logging.debug("Creating the articles folder inside the build folder.")
-            os.makedirs('{}/{}'.format(get_config(args, 'builddir'), path))
+            os.makedirs('{}/{}'.format(get_config(args, 'builddir'), var['path']))
 
-        with open('{}/{}/index.html'.format(get_config(args, 'builddir'), path), 'w') as k:
+        with open('{}/{}/index.html'.format(get_config(args, 'builddir'), var['path']), 'w') as k:
             logging.debug("Writing the articles index.html")
             k.write(article)
 
 
         # Add the article to the list of articles for rendering of the index file.
         # You can set 'index: false' in the articles config file to exclude the article from the index page.
-        if 'index' not in config or config['index'] == True:
-            logging.debug('Adding article "{}" to the index.'.format(title))
-            articlelist.append({'title': title,
-                                'path': path})
+        if 'index' not in var or var['index'] == True:
+            logging.debug('Adding article "{}" to the index.'.format(var['title']))
+            articlelist.append({'title': var['title'],
+                                'path': var['path']})
 
     # Create the index
     logging.debug("Creating the index.")
     template = env.get_template('index.html')
     index = template.render(
-                            articles=articlelist
+                            articles=articlelist,
+                            var=var
                             )
     with open('{}/index.html'.format(get_config(args, 'builddir')), 'w') as k:
         k.write(index)
+
+    if os.path.exists('temp'):
+        logging.debug("Removing temp dir")
+        shutil.rmtree('temp')
 
     logging.info("Site generation complete.")
 
