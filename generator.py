@@ -208,7 +208,7 @@ def main_generate(args):
         # Get the title
         if 'title' not in var:
             var['title'] = get_first_heading(markdown)
-            logging.debug('Getting var.title "{}" from first header.'.format(title))
+            logging.debug('Getting var.title "{}" from first header.'.format(var['title']))
 
         # We generate the path from the title if it isn't provided by the 
         # article itself.
