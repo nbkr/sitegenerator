@@ -67,7 +67,7 @@ def main_sync(args):
 
     logging.info('Starting rsync.')
     try:
-        subprocess.check_call('rsync -az {}/ {}'.format(get_config(args, 'builddir'), get_config(args, 'sync.{}.dest'.format(args.environment))), shell=True)
+        subprocess.check_call('rsync -az --delete {}/ {}'.format(get_config(args, 'builddir'), get_config(args, 'sync.{}.dest'.format(args.environment))), shell=True)
     except:
         logging.critical('Rsync failed.')
         sys.exit(1)
