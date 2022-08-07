@@ -236,10 +236,9 @@ def main_generate(args):
         # Render the article with the template it wants - with limits.
         logging.debug('Rendering article.')
         default_template = 'article.html'
-        valid_templates = ['article.html', 'article_raw.html']
         if 'template' not in var:
             template = default_template
-        elif not os.path.exists('{}/{}'.format(get_config(args, 'templatesdir'), var['template'])) or var['template'] not in valid_templates:
+        elif not os.path.exists('{}/{}'.format(get_config(args, 'templatesdir'), var['template'])):
             logging.warning('Invalid template file "{}" for article "{}". Fallback to default template "article.html".'.format(var['template'], var['title']))
             template = default_template
         else:
@@ -274,11 +273,15 @@ def main_generate(args):
                                 'path': var['path']})
 
     # Create the index
+    globalvar = None
+    if check_if_in_config(args, 'var'):
+        globalvar = get_config(args, 'var')
+
     logging.debug("Creating the index.")
     template = env.get_template('index.html')
     index = template.render(
                             articles=articlelist,
-                            var=var
+                            var=globalvar
                             )
     with open('{}/index.html'.format(get_config(args, 'builddir')), 'w') as k:
         k.write(index)
