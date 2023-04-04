@@ -12,7 +12,7 @@ var:
 
 
 articles:
-    - source: /home/bf/Projekte/articles/impressum
-    - source: /home/bf/Projekte/articles/datenschutz
+    - source: file:///home/bf/Projekte/articles/impressum
+    - source: file:///home/bf/Projekte/articles/datenschutz
       var:
           mailaddress: a_different_one@example.com
