@@ -175,13 +175,24 @@ def main_generate(args):
 
         os.makedirs('temp')
 
-        # Download the article from the git repository into a temp folder
-        logging.debug('Calling git clone for "{}"'.format(article['source']))
-        try:
-            subprocess.check_call('git clone --quiet {} temp 2>&1 >/dev/null'.format(article['source']), shell=True)
-        except:
-            print('FAILED: git clone {}'.format(article['source']))
-            sys.exit(1)
+        if article['source'].startswith('git://'):
+            source = article['source'].replace('git://', '')
+            # Download the article from the git repository into a temp folder
+            logging.debug('Calling git clone for "{}"'.format(article['source']))
+            try:
+                subprocess.check_call('git clone --quiet {} temp 2>&1 >/dev/null'.format(source), shell=True)
+            except:
+                print('FAILED: git clone {}'.format(article['source']))
+                sys.exit(1)
+
+        if article['source'].startswith('file://'):
+            source = article['source'].replace('file://', '')
+            logging.debug('Copying "{}"'.format(article['source']))
+            try:
+                shutil.copytree('{}/', 'temp/'.format(source))
+            except:
+                print('FAILED: copying {}'.format(article['source']))
+                sys.exit(1)
 
         # Read the text file
         if not os.path.exists('temp/text.md'):
