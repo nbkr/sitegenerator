@@ -175,6 +175,7 @@ def main_generate(args):
 
         os.makedirs('temp')
 
+        typefound = False
         if article['source'].startswith('git://'):
             source = article['source'].replace('git://', '')
             # Download the article from the git repository into a temp folder
@@ -182,17 +183,27 @@ def main_generate(args):
             try:
                 subprocess.check_call('git clone --quiet {} temp 2>&1 >/dev/null'.format(source), shell=True)
             except:
-                print('FAILED: git clone {}'.format(article['source']))
+                logging.critical('FAILED: git clone {}'.format(article['source']))
                 sys.exit(1)
+            
+            typefound = True
 
         if article['source'].startswith('file://'):
             source = article['source'].replace('file://', '')
             logging.debug('Copying "{}"'.format(article['source']))
+            
             try:
-                shutil.copytree('{}/', 'temp/'.format(source))
+                #shutil.rmtree('temp')
+                shutil.copytree('{}/'.format(source), 'temp/', dirs_exist_ok=True)
             except:
-                print('FAILED: copying {}'.format(article['source']))
+                logging.critical('FAILED: copying {}'.format(article['source']))
                 sys.exit(1)
+
+            typefound = True
+
+        if not typefound:
+            logging.critical('Sourcetype unclear for "{}"'.format(article['source']))
+            sys.exit(1)
 
         # Read the text file
         if not os.path.exists('temp/text.md'):
